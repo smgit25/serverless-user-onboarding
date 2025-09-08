@@ -1,17 +1,29 @@
-# serverless-user-onboarding
+# Cloud-Native API Orchestration (Starter)
 
-## Overview
-This project is a scalable, serverless backend platform built using AWS services. It leverages event-driven architectures to efficiently handle API requests, process messages, and ensure high availability and cost efficiency.
+Includes:
+- `auth-service` (Spring Boot) — auth & JWT endpoints
+- `task-processor` (Node.js Lambdas) — SQS consumer & SES notifications
+- `serverless.yml` to deploy Node lambdas and infra
+- GitHub Actions workflow for automated Node deployments
 
-## Key Features
-- **Serverless Architecture:** Built with AWS Lambda and API Gateway for scalable, on-demand compute.
-- **Event-Driven Workflows:** Utilizes SNS, SQS, and EventBridge for seamless microservice communication.
-- **Database:** DynamoDB for NoSQL data storage and high-performance queries.
-- **Automation & CI/CD:** Deployments automated with GitHub Actions and AWS CI/CD pipelines for rapid, reliable releases.
-- **Scalability & Cost Efficiency:** Serverless approach ensures optimal resource usage and minimal operational cost.
+## Quick start (local dev)
 
-## Tech Stack
-- **Backend:** Node.js, AWS Lambda, API Gateway
-- **Database:** DynamoDB
-- **Messaging & Events:** SNS, SQS, EventBridge
-- **Deployment & CI/CD:** GitHub Actions, AWS CI/CD
+### 1) Run auth-service locally
+cd auth-service
+mvn spring-boot:run
+# service runs on http://localhost:8080
+# endpoints:
+# POST /auth/register {username,password,email}
+# POST /auth/login {username,password}
+
+### 2) Deploy Nodejs lambdas & infra
+# configure AWS creds: aws configure (or set env vars)
+cd task-processor
+npm install
+# deploy using root serverless.yml:
+sls deploy --stage prod
+
+## Notes
+- Replace JWT secret in auth-service/ JwtUtil with secure value (SSM/SecretsManager).
+- Verify SES sender before trying to send emails.
+- This repo is a starter skeleton: add persistence (RDS/DynamoDB for users), better validation, and production-grade error handling.
