@@ -1,0 +1,15 @@
+{
+  "name": "task-processor",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@aws-sdk/client-sqs": "^3.654.0",
+    "@aws-sdk/client-ses": "^3.654.0",
+    "@aws-sdk/client-sns": "^3.654.0",
+    "node-fetch": "^3.3.1"
+  },
+  "scripts": {
+    "deploy": "sls deploy"
+  }
+}

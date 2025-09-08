@@ -1,0 +1,80 @@
+service: cloud-native-api-orchestration
+
+provider:
+  name: aws
+  runtime: nodejs18.x
+  region: ap-south-1
+  stage: prod
+  environment:
+    USERS_TABLE: cloud-native-api-orchestration-prod-users
+    PARAM_EMAIL_FROM: /cloud-native-api-orchestration-prod/emailFrom
+
+functions:
+  processTask:
+    handler: task-processor/handlers/processTask.handler
+    events:
+      - sqs:
+          arn:
+            Fn::GetAtt:
+              - UserEventsQueue
+              - Arn
+    timeout: 20
+
+  sendNotification:
+    handler: task-processor/handlers/sendNotification.handler
+    events:
+      - sns: { Ref: NotificationsTopic }
+
+resources:
+  Resources:
+    UsersTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: cloud-native-api-orchestration-prod-users
+        BillingMode: PAY_PER_REQUEST
+        AttributeDefinitions:
+          - AttributeName: id
+            AttributeType: S
+        KeySchema:
+          - AttributeName: id
+            KeyType: HASH
+
+    UserEventsQueue:
+      Type: AWS::SQS::Queue
+      Properties:
+        QueueName: cloud-native-api-orchestration-prod-user-events
+
+    NotificationsTopic:
+      Type: AWS::SNS::Topic
+      Properties:
+        TopicName: cloud-native-api-orchestration-prod-notifications
+
+    EventBus:
+      Type: AWS::Events::EventBus
+      Properties:
+        Name: cloud-native-api-orchestration-prod-bus
+
+    # EventBridge Rule - sample
+    EventRuleToSQS:
+      Type: AWS::Events::Rule
+      Properties:
+        Name: cloud-native-api-to-sqs
+        EventBusName: { Ref: EventBus }
+        EventPattern:
+          source: ["user.api"]
+          detail-type: ["UserCreated"]
+        Targets:
+          - Arn: { "Fn::GetAtt": [ UserEventsQueue, Arn ] }
+            Id: "TargetSQS"
+
+    EventRuleToSNS:
+      Type: AWS::Events::Rule
+      Properties:
+        Name: cloud-native-api-to-sns
+        EventBusName: { Ref: EventBus }
+        EventPattern:
+          source: ["user.api"]
+          detail-type: ["UserCreated"]
+        Targets:
+          - Arn: { Ref: NotificationsTopic }
+            Id: "TargetSNS"
